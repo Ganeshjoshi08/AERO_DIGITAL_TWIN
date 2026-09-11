@@ -20,7 +20,9 @@ export class TelemetryWebSocketService {
     onMessage: (data: DigitalTwinOutput) => void,
     onStatusChange: (status: ConnectionStatus) => void
   ) {
-    this.wsUrl = import.meta.env.VITE_WS_URL || 'ws://127.0.0.1:8000/ws/telemetry';
+    const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+    const DEFAULT_WS_URL = isLocal ? 'ws://127.0.0.1:8000/ws/telemetry' : 'wss://aerotwin-api.onrender.com/ws/telemetry';
+    this.wsUrl = import.meta.env.VITE_WS_URL || DEFAULT_WS_URL;
     this.onMessageCallback = onMessage;
     this.onStatusCallback = onStatusChange;
   }
