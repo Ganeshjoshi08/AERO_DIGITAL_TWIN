@@ -18,7 +18,18 @@ import {
 } from 'lucide-react';
 
 export const Overview: React.FC = () => {
-  const { currentTelemetry, alerts, triggerMockFault, acknowledgeAlert } = useTelemetry();
+  const { 
+    currentTelemetry, 
+    alerts, 
+    triggerMockFault, 
+    acknowledgeAlert,
+    connectionStatus,
+    isConnected,
+    backendReplay 
+  } = useTelemetry();
+
+  const isMockMode = import.meta.env.VITE_USE_MOCK_TELEMETRY === 'true';
+  const isOnline = connectionStatus === 'CONNECTED' || isConnected;
 
   // Helper to format anomaly score badge
   const getAnomalyBadge = (score: number) => {
@@ -41,17 +52,60 @@ export const Overview: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      {/* Simulation Banner Notice (Requirement: Do not claim mock values are real) */}
-      <div className="bg-blue-50/50 border border-blue-200/60 rounded-lg p-3 px-4 flex items-center justify-between text-xs text-blue-800 font-medium">
-        <div className="flex items-center gap-2">
-          <HelpCircle className="w-4 h-4 text-blue-600 shrink-0" />
-          <span><strong>System Notice:</strong> AeroTwin is currently running in <strong>Simulation Sandbox Mode</strong> using mock telemetry and mock AI services for frontend layout demonstration.</span>
+      {/* Dynamic System Banner Notice based on actual connection mode */}
+      {!isMockMode && isOnline && backendReplay ? (
+        <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 rounded-lg p-3 px-4 flex items-center justify-between text-xs text-emerald-900 dark:text-emerald-200 font-medium transition-colors">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 animate-pulse" />
+            <span>
+              <strong>System Active:</strong> AeroTwin is receiving live telemetry through the Digital Twin backend using CSV mission replay (Frame {backendReplay.position.toLocaleString()} / {backendReplay.total_frames.toLocaleString()}, Flight #{backendReplay.flight_id}, Phase: {backendReplay.flight_phase}).
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 bg-emerald-100/90 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200 px-2.5 py-0.5 rounded font-mono font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            LIVE REPLAY ACTIVE
+          </div>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0 bg-blue-100/80 px-2 py-0.5 rounded font-mono">
-          <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-          DEMO ACTIVE
+      ) : !isMockMode && isOnline ? (
+        <div className="bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/60 rounded-lg p-3 px-4 flex items-center justify-between text-xs text-emerald-900 dark:text-emerald-200 font-medium transition-colors">
+          <div className="flex items-center gap-2">
+            <Activity className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+            <span>
+              <strong>System Active:</strong> AeroTwin is receiving live telemetry through the Digital Twin FastAPI backend service.
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 bg-emerald-100/90 dark:bg-emerald-900/80 text-emerald-800 dark:text-emerald-200 px-2.5 py-0.5 rounded font-mono font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            TWIN ONLINE
+          </div>
         </div>
-      </div>
+      ) : !isMockMode && connectionStatus === 'CONNECTING' ? (
+        <div className="bg-amber-50/70 dark:bg-amber-950/40 border border-amber-200/80 dark:border-amber-800/60 rounded-lg p-3 px-4 flex items-center justify-between text-xs text-amber-900 dark:text-amber-200 font-medium transition-colors">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0 animate-spin" />
+            <span>
+              <strong>System Notice:</strong> Establishing connection to the AeroTwin Digital Twin backend service...
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 bg-amber-100/90 dark:bg-amber-900/80 text-amber-800 dark:text-amber-200 px-2.5 py-0.5 rounded font-mono font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+            CONNECTING
+          </div>
+        </div>
+      ) : (
+        <div className="bg-blue-50/50 dark:bg-slate-800/60 border border-blue-200/60 dark:border-slate-700 rounded-lg p-3 px-4 flex items-center justify-between text-xs text-blue-800 dark:text-blue-300 font-medium transition-colors">
+          <div className="flex items-center gap-2">
+            <HelpCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0" />
+            <span>
+              <strong>System Notice:</strong> AeroTwin is currently running in <strong>Simulation Sandbox Mode</strong> using mock telemetry and mock AI services for frontend layout demonstration.
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0 bg-blue-100/80 dark:bg-slate-700 text-blue-800 dark:text-blue-200 px-2.5 py-0.5 rounded font-mono font-bold">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+            DEMO ACTIVE
+          </div>
+        </div>
+      )}
 
       {/* Row 1: Parameter Metric Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 select-none">
