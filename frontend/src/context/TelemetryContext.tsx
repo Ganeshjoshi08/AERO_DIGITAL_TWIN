@@ -320,21 +320,33 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     fuelOctane: 95
   });
 
-  // Load initial REST state (when mock mode is false)
+  // Load initial REST state & periodic fallback sync when WebSocket is connecting
   useEffect(() => {
-    const useMock = import.meta.env.VITE_USE_MOCK_TELEMETRY === 'true';
-    if (useMock) return;
-
-    async function loadInitialState() {
+    let isMounted = true;
+    const fetchState = async () => {
       try {
         const data = await fetchEngineState();
-        handleIncomingTwinOutput(data);
+        if (isMounted) {
+          handleIncomingTwinOutput(data);
+        }
       } catch (e) {
-        console.error("[TelemetryContext] Failed to load initial REST state:", e);
+        console.error("[TelemetryContext] Failed to load REST state:", e);
       }
-    }
-    loadInitialState();
-  }, []);
+    };
+
+    fetchState();
+
+    const interval = setInterval(() => {
+      if (connectionStatus !== 'CONNECTED' && !isReplayMode) {
+        fetchState();
+      }
+    }, 2500);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, [connectionStatus, isReplayMode]);
 
   // Connect WebSocket stream (when mock mode is false)
   useEffect(() => {
