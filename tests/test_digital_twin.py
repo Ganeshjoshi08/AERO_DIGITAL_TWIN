@@ -218,7 +218,7 @@ def test_what_if_simulation():
     )
 
     # Physics performance model outputs deterministic governed expectation for 95% throttle
-    assert expected_simulation.rpm == 2561.8
+    assert expected_simulation.rpm == 3480.8
     assert expected_simulation.fuel_flow > 5.0
     assert expected_simulation.egt > 1000.0
 
@@ -242,3 +242,32 @@ def test_end_to_end_integration():
     json_str = output.model_dump_json()
     assert isinstance(json_str, str)
     assert "current_engine_state" in json_str
+
+
+def test_expected_rpm_extended_limits():
+    """11. Test that expected RPM scales past 3000 RPM up to 4000 RPM limit."""
+    state = EngineState(**VALID_TELEMETRY)
+    state.throttle = 100.0
+    state.engine_load = 5.0
+    expected = PerformanceModel.calculate_expected_state(state)
+    assert expected.rpm > 3000.0
+    assert expected.rpm <= 4000.0
+
+
+def test_safety_weighted_health_index():
+    """12. Test that a single critical subsystem failure pulls down overall health index."""
+    # Force single failing subsystem and check safety-first rating pulls down overall rating
+    actual_subs, overall_score = HealthEngine.evaluate_health(
+        actual=EngineState(**VALID_TELEMETRY),
+        residuals={
+            "cht": 0.0,
+            "egt": 0.0,
+            "oil_pressure": 0.0,
+            "fuel_flow": 0.0,
+            "vibration": 3.0, # triggers heavy mechanical deduction
+        }
+    )
+    
+    # Assert mechanical is degraded and overall score is pulled down below mean average
+    assert actual_subs.mechanical < 50.0
+    assert overall_score < 75.0

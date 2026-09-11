@@ -79,7 +79,7 @@ def test_post_simulation_what_if():
     assert "expected_engine_state" in data
     assert "residuals" in data
     assert "subsystem_health" in data
-    assert data["expected_engine_state"]["rpm"] == 2561.8
+    assert data["expected_engine_state"]["rpm"] == 3480.8
     assert data["overall_health"] == 100.0
     assert data["metadata"]["altitude"] == 12000.0
 

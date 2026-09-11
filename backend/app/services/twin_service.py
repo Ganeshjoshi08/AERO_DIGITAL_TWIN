@@ -76,3 +76,15 @@ class DigitalTwinService:
             altitude=altitude,
             ambient_temp=ambient_temp
         )
+
+    def reset_service(self) -> None:
+        """
+        Resets the DigitalTwinCore state and clears degradation history.
+        """
+        self.core.tracker.clear_history()
+        self.core.current_state = None
+        self.core.expected_state = None
+        self.core.last_residuals = None
+        self.core.prev_throttle = None
+        # Repopulate with default telemetry
+        self.last_output = self.core.update(self.default_telemetry)

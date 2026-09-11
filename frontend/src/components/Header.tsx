@@ -1,4 +1,4 @@
-import { Bell, HelpCircle, User, Wifi, WifiOff } from 'lucide-react';
+import { Bell, HelpCircle, User, Wifi, WifiOff, Sun, Moon } from 'lucide-react';
 import { useTelemetry } from '../context/TelemetryContext';
 import type { ActiveTab } from './Sidebar';
 
@@ -7,7 +7,7 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({ activeTab }) => {
-  const { isConnected, connectionStatus, currentTelemetry, alerts, toggleConnection } = useTelemetry();
+  const { isConnected, connectionStatus, currentTelemetry, alerts, toggleConnection, backendReplay, theme, toggleTheme } = useTelemetry();
 
   // Map active tab to reader-friendly title
   const getTitle = () => {
@@ -64,20 +64,28 @@ export const Header: React.FC<HeaderProps> = ({ activeTab }) => {
   };
 
   return (
-    <header className="h-16 bg-white border-b border-slate-200 px-8 flex items-center justify-between shrink-0 select-none">
+    <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-8 flex items-center justify-between shrink-0 select-none transition-colors duration-200">
       {/* Page Title & Navigation Info */}
       <div className="flex items-center gap-8">
-        <h2 className="text-xl font-bold text-slate-900">{getTitle()}</h2>
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">{getTitle()}</h2>
         
         <div className="hidden md:flex items-center gap-6 text-sm">
           <div className="flex flex-col relative py-4">
-            <span className="font-semibold text-slate-800">Engine ID: {currentTelemetry.mission.id === 'Alpha-7' ? 'NX-204' : 'SIM-001'}</span>
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-950"></div>
+            <span className="font-semibold text-slate-800 dark:text-slate-200">Engine ID: {currentTelemetry.mission.id === 'Alpha-7' ? 'NX-204' : 'SIM-001'}</span>
+            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-950 dark:bg-white"></div>
           </div>
           
-          <div className="text-slate-500 font-medium">
-            Mission: <span className="text-slate-800 font-semibold">{currentTelemetry.mission.id}</span>
+          <div className="text-slate-500 dark:text-slate-400 font-medium">
+            Mission: <span className="text-slate-800 dark:text-slate-200 font-semibold">{currentTelemetry.mission.id}</span>
           </div>
+
+          {backendReplay && (
+            <div className="flex items-center gap-2 px-2.5 py-1 rounded bg-blue-50 border border-blue-200 text-[11px] font-bold text-blue-700 font-mono leading-none">
+              <span>DATA SOURCE: CSV REPLAY</span>
+              <span className="text-blue-300">|</span>
+              <span>Frame: {backendReplay.position.toLocaleString()} / {backendReplay.total_frames.toLocaleString()}</span>
+            </div>
+          )}
 
           <button 
             onClick={toggleConnection}
@@ -101,28 +109,41 @@ export const Header: React.FC<HeaderProps> = ({ activeTab }) => {
 
       {/* Header Quick Controls */}
       <div className="flex items-center gap-4">
+        {/* Theme Toggle Button */}
+        <button 
+          onClick={toggleTheme}
+          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} theme`}
+          className="p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors"
+        >
+          {theme === 'light' ? (
+            <Moon className="w-5 h-5" />
+          ) : (
+            <Sun className="w-5 h-5" />
+          )}
+        </button>
+
         {/* Alerts & Notifications */}
         <div className="relative">
-          <button className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors relative">
+          <button className="p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors relative">
             <Bell className="w-5 h-5" />
             {unacknowledgedAlerts.length > 0 && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white"></span>
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white dark:ring-slate-900"></span>
             )}
           </button>
         </div>
 
         {/* Help Center */}
-        <button className="p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors">
+        <button className="p-2 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
           <HelpCircle className="w-5 h-5" />
         </button>
 
         {/* Divider */}
-        <div className="w-px h-6 bg-slate-200"></div>
+        <div className="w-px h-6 bg-slate-200 dark:bg-slate-800"></div>
 
         {/* Profile */}
-        <button className="flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors">
-          <div className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center overflow-hidden">
-            <User className="w-4 h-4 text-slate-500" />
+        <button className="flex items-center gap-2 px-3 py-1.5 text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-lg transition-colors">
+          <div className="w-6 h-6 rounded-full bg-slate-200 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+            <User className="w-4 h-4 text-slate-500 dark:text-slate-400" />
           </div>
           <span className="text-sm font-semibold">Profile</span>
         </button>

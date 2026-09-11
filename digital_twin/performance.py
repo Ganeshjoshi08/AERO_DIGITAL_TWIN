@@ -68,8 +68,8 @@ class PerformanceModel:
             )
 
         # Expected RPM based on throttle and commanded load
-        expected_rpm = 1000.0 + (actual.throttle / 100.0) * 1800.0 - (actual.engine_load / 100.0) * 150.0
-        expected_rpm = max(1000.0, min(3000.0, expected_rpm))
+        expected_rpm = 1000.0 + (actual.throttle / 100.0) ** 2.8 * 3035.0 - (actual.engine_load / 100.0) * 150.0
+        expected_rpm = max(1000.0, min(4000.0, expected_rpm))
 
         # Expected MAP (Manifold Absolute Pressure)
         expected_map = actual.ambient_pressure * (cls.MAP_BASE + (actual.throttle / 100.0) * cls.MAP_SCALE)

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { fetchEngineState } from '../services/api';
 import { TelemetryWebSocketService, type ConnectionStatus } from '../services/websocket';
-import type { ExpectedEngineState, DigitalTwinOutput } from '../types/digitalTwin';
+import type { ExpectedEngineState, DigitalTwinOutput, ReplayMetadata } from '../types/digitalTwin';
 
 // Define the structure of engine telemetry parameters
 export interface TelemetryData {
@@ -70,6 +70,9 @@ export interface TelemetryContextType {
   isConnected: boolean;
   isSimulated: boolean;
   isReplayMode: boolean;
+  backendReplay: ReplayMetadata | null;
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
   expectedTelemetry: ExpectedEngineState | null;
   residuals: Record<string, number> | null;
   connectionStatus: ConnectionStatus;
@@ -282,6 +285,25 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isConnected, setIsConnected] = useState(true);
   const [isSimulated, setIsSimulated] = useState(false);
   const [isReplayMode, setIsReplayMode] = useState(false);
+  const [backendReplay, setBackendReplay] = useState<ReplayMetadata | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    const saved = localStorage.getItem('aerotwin_theme');
+    if (saved === 'dark' || saved === 'light') return saved;
+    return 'light';
+  });
+
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('aerotwin_theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+  };
 
   const [expectedTelemetry, setExpectedTelemetry] = useState<ExpectedEngineState | null>(null);
   const [residuals, setResiduals] = useState<Record<string, number> | null>(null);
@@ -346,6 +368,7 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (isReplayMode) return;
     setExpectedTelemetry(data.expected_engine_state);
     setResiduals(data.residuals);
+    setBackendReplay(data.replay || null);
     
     setCurrentTelemetry(prev => {
       const prevConsumed = prev ? prev.fuelConsumed : 0;
@@ -362,7 +385,7 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     const nextFuel = Math.round((prevConsumed + (currentFlow / 3600)) * 1000) / 1000;
     
     // Calculate running flight time
-    const timeSec = prevTimeSec + 1;
+    const timeSec = data.replay ? data.replay.time_seconds : prevTimeSec + 1;
     const hrs = Math.floor(timeSec / 3600).toString().padStart(2, '0');
     const mins = Math.floor((timeSec % 3600) / 60).toString().padStart(2, '0');
     const secs = (timeSec % 60).toString().padStart(2, '0');
@@ -397,7 +420,7 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     else if (data.operating_mode === 'ENGINE_OFF') status = 'STOPPED';
 
     return {
-      timestamp: data.timestamp,
+      timestamp: data.replay ? data.replay.dataset_timestamp : data.timestamp,
       rpm: actual.rpm,
       cht: actual.cht,
       egt: actual.egt,
@@ -759,6 +782,9 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       isConnected,
       isSimulated,
       isReplayMode,
+      backendReplay,
+      theme,
+      toggleTheme,
       simulationInputs,
       setSimulationInputs,
       replayState,

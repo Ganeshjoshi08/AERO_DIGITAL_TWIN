@@ -64,4 +64,16 @@ export interface DigitalTwinOutput {
     degradation_rate: number;
   };
   mission_context: MissionContext;
+  replay?: ReplayMetadata;
+}
+
+export interface ReplayMetadata {
+  position: number;
+  total_frames: number;
+  progress_percent: number;
+  cycle: number;
+  flight_id: number;
+  flight_phase: string;
+  dataset_timestamp: string;
+  time_seconds: number;
 }
