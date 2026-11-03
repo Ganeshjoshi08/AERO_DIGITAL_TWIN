@@ -5,7 +5,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from backend.app.routes import engine, telemetry, simulation, replay
+from backend.app.routes import engine, telemetry, simulation, replay, ai
 from backend.app.services.twin_service import DigitalTwinService
 
 # 1. FastAPI App Initialization
@@ -29,6 +29,7 @@ app.include_router(engine.router, prefix="/api/v1")
 app.include_router(telemetry.router, prefix="/api/v1")
 app.include_router(simulation.router, prefix="/api/v1")
 app.include_router(replay.router, prefix="/api/v1")
+app.include_router(ai.router, prefix="/api/v1")
 
 # 4. Error Handling Handlers (hides internal stack traces, returns JSON)
 @app.exception_handler(RequestValidationError)
@@ -151,6 +152,15 @@ async def websocket_telemetry(websocket: WebSocket) -> None:
                 dataset_timestamp = row.get("Timestamp", "")
                 
                 response_data = output.model_dump()
+                
+                # Run Real-Time Machine Learning Inference (Random Forest RUL & Isolation Forest Anomaly)
+                try:
+                    from backend.app.services.ml_service import ml_service
+                    ai_res = ml_service.predict(response_data.get("current_engine_state", {}))
+                    response_data["ai_prognostics"] = ai_res
+                except Exception:
+                    response_data["ai_prognostics"] = None
+
                 response_data["replay"] = {
                     "position": position,
                     "total_frames": total,
@@ -170,8 +180,16 @@ async def websocket_telemetry(websocket: WebSocket) -> None:
                 # Feed to digital twin core singleton
                 output = twin_service.update_telemetry(telemetry_data)
                 
+                response_data = output.model_dump()
+                try:
+                    from backend.app.services.ml_service import ml_service
+                    ai_res = ml_service.predict(response_data.get("current_engine_state", {}))
+                    response_data["ai_prognostics"] = ai_res
+                except Exception:
+                    response_data["ai_prognostics"] = None
+
                 # Broadcast output packet as JSON
-                await websocket.send_text(output.model_dump_json())
+                await websocket.send_text(json.dumps(response_data))
             
             # Controlled 1s interval (low CPU overhead)
             await asyncio.sleep(1.0)
