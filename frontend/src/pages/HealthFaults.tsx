@@ -14,22 +14,25 @@ export const HealthFaults: React.FC = () => {
 
   // Dynamically calculate diagnostics details based on the current engine state
   const getDiagnosticStatus = () => {
-    if (currentTelemetry.anomalyScore > 0.8) {
+    const isFault = currentTelemetry.engineStatus === 'FAULT' || currentTelemetry.healthIndex < 60 || currentTelemetry.anomalyScore > 0.7;
+    const isWarning = currentTelemetry.engineStatus === 'OVERHEATING' || currentTelemetry.healthIndex < 80 || currentTelemetry.anomalyScore > 0.35 || !!currentTelemetry.aiPrognostics?.anomaly_detected;
+
+    if (isFault) {
       return {
         title: 'Immediate Inspection Required',
-        description: `Severe performance deviation detected. Estimated fault: ${currentTelemetry.faultPrediction}.`,
+        description: `Severe performance deviation detected (${currentTelemetry.rpm > 2750 ? `Overspeed alert at ${currentTelemetry.rpm} RPM` : currentTelemetry.faultPrediction || 'Critical Engine State'}).`,
         severity: 'CRITICAL',
         color: 'text-red-700 bg-red-50 border-red-200',
         recommendations: [
           'Perform immediately: Shut down engine operations and abort active flight profile.',
           'Drain and inspect engine oil for metallic contaminants (wear indicators).',
-          'Inspect the primary oil pump pressure valves and oil line seals.'
+          'Inspect cylinder head assembly, valves, and primary oil pump seals.'
         ]
       };
-    } else if (currentTelemetry.anomalyScore > 0.4) {
+    } else if (isWarning) {
       return {
         title: 'Maintenance Advisory Active',
-        description: `Thermal or mechanical degradation noticed. Predicted fault: ${currentTelemetry.faultPrediction}.`,
+        description: `Thermal or mechanical degradation noticed. Predicted fault: ${currentTelemetry.faultPrediction || 'Operational warning'}.`,
         severity: 'WARNING',
         color: 'text-amber-700 bg-amber-50 border-amber-200',
         recommendations: [

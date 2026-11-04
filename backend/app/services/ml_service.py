@@ -154,13 +154,24 @@ class MachineLearningService:
                 logger.error(f"Inference error: {e}")
 
         # Fallback if models are loading or unavailable
+        rpm_val = float(telemetry.get("rpm", 2450) or 2450)
+        cht_val = float(telemetry.get("cht", 380) or 380)
+        egt_val = float(telemetry.get("egt", 1450) or 1450)
+        oil_p_val = float(telemetry.get("oil_pressure", 65) or 65)
+        is_fault = (rpm_val > 2750 or rpm_val < 800 or cht_val > 420 or egt_val > 1600 or oil_p_val < 45)
+        is_warn = (rpm_val > 2700 or cht_val > 400 or egt_val > 1550 or oil_p_val < 50)
+
+        fallback_detected = is_fault or is_warn
+        fallback_score = 0.88 if is_fault else (0.55 if is_warn else 0.08)
+        fallback_rul = 38 if is_fault else (115 if is_warn else 245)
+
         return {
             "status": "fallback",
-            "predicted_rul": 245,
+            "predicted_rul": fallback_rul,
             "max_cycles": 380,
-            "anomaly_detected": False,
-            "anomaly_status": "NOMINAL",
-            "anomaly_score": 0.08,
+            "anomaly_detected": fallback_detected,
+            "anomaly_status": "ANOMALY DETECTED" if fallback_detected else "NOMINAL",
+            "anomaly_score": fallback_score,
             "r2_accuracy": 94.44,
             "model_source": "Analytical Baseline Fallback",
             "shap_factors": self.SHAP_IMPORTANCE

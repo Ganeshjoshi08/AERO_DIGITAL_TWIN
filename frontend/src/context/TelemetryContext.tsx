@@ -442,6 +442,39 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     else if (data.operating_mode === 'IDLE') status = 'IDLE';
     else if (data.operating_mode === 'ENGINE_OFF') status = 'STOPPED';
 
+    // Sensor threshold protection guard
+    if (actual.rpm > 2750 || actual.cht > 420 || actual.egt > 1600 || actual.oil_pressure < 45 || data.overall_health < 50) {
+      status = 'FAULT';
+    } else if (actual.cht > 400 || actual.egt > 1550 || actual.oil_pressure < 50 || data.overall_health < 75) {
+      if (status !== 'FAULT') status = 'OVERHEATING';
+    }
+
+    const rawAnomalyScore = (data as any).ai_prognostics?.anomaly_score !== undefined
+      ? (data as any).ai_prognostics.anomaly_score
+      : data.degradation_indicators.anomaly_score;
+    const effectiveAnomalyScore = status === 'FAULT' 
+      ? Math.max(rawAnomalyScore || 0, 0.88) 
+      : (status === 'OVERHEATING' ? Math.max(rawAnomalyScore || 0, 0.52) : (rawAnomalyScore || 0.08));
+
+    const rawDegradation = Math.round(data.degradation_indicators.degradation_rate * 100);
+    const effectiveDegradation = rawDegradation > 0 
+      ? rawDegradation 
+      : Math.max(0, Math.round(100 - data.overall_health));
+
+    const computedRul = status === 'FAULT' 
+      ? Math.min((data as any).ai_prognostics?.predicted_rul || 245, Math.max(12, Math.round((data.overall_health / 100) * 120)))
+      : ((data as any).ai_prognostics?.predicted_rul !== undefined 
+          ? (data as any).ai_prognostics.predicted_rul 
+          : Math.max(15, Math.round((data.overall_health / 100) * 260)));
+
+    let faultPred = (data as any).ai_prognostics?.anomaly_status === 'ANOMALY DETECTED'
+      ? 'Isolation Forest Anomaly Detected'
+      : (data.current_engine_state.health_state === 'NOMINAL' ? 'Nominal Operations' : `${data.current_engine_state.health_state} Status Alert`);
+
+    if (actual.rpm > 2750) faultPred = `Overspeed Alert (${actual.rpm} RPM)`;
+    else if (actual.cht > 420) faultPred = `Thermal Limit Exceeded (${actual.cht}°F CHT)`;
+    else if (actual.oil_pressure < 45) faultPred = `Low Oil Pressure (${actual.oil_pressure} PSI)`;
+
     return {
       timestamp: data.replay ? data.replay.dataset_timestamp : data.timestamp,
       rpm: actual.rpm,
@@ -462,16 +495,10 @@ export const TelemetryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       fuelConsumed: nextFuel,
       engineStatus: status,
       healthIndex: data.overall_health,
-      rulCycles: (data as any).ai_prognostics?.predicted_rul !== undefined 
-        ? (data as any).ai_prognostics.predicted_rul 
-        : Math.max(15, Math.round((data.overall_health / 100) * 260)),
-      anomalyScore: (data as any).ai_prognostics?.anomaly_score !== undefined
-        ? (data as any).ai_prognostics.anomaly_score
-        : data.degradation_indicators.anomaly_score,
-      faultPrediction: (data as any).ai_prognostics?.anomaly_status === 'ANOMALY DETECTED'
-        ? 'Isolation Forest Anomaly Detected'
-        : (data.current_engine_state.health_state === 'NOMINAL' ? 'Nominal Operations' : `${data.current_engine_state.health_state} Status Alert`),
-      degradationStatus: Math.round(data.degradation_indicators.degradation_rate * 100),
+      rulCycles: computedRul,
+      anomalyScore: effectiveAnomalyScore,
+      faultPrediction: faultPred,
+      degradationStatus: effectiveDegradation,
       modelConfidence: (data as any).ai_prognostics?.r2_accuracy || 94.4,
       aiPrognostics: (data as any).ai_prognostics || undefined,
       subsystemHealth: mappedSubsystems,

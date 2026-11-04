@@ -1,6 +1,6 @@
 import React from 'react';
 import { useTelemetry } from '../context/TelemetryContext';
-import { FileText, Printer, Download, Award, ShieldAlert } from 'lucide-react';
+import { FileText, Printer, Download, Award, ShieldAlert, CheckCircle2 } from 'lucide-react';
 
 export const Reports: React.FC = () => {
   const { currentTelemetry } = useTelemetry();
@@ -18,6 +18,8 @@ export const Reports: React.FC = () => {
   };
 
   const safety = getSafetyGrade();
+  const isFault = currentTelemetry.engineStatus === 'FAULT' || currentTelemetry.healthIndex < 60;
+  const isWarning = currentTelemetry.engineStatus === 'OVERHEATING' || currentTelemetry.healthIndex < 80 || currentTelemetry.anomalyScore > 0.35 || !!currentTelemetry.aiPrognostics?.anomaly_detected;
 
   return (
     <div className="space-y-6 print:p-8 print:bg-white">
@@ -127,7 +129,16 @@ export const Reports: React.FC = () => {
               </div>
               <div className="text-xs font-semibold text-slate-600">
                 <div>Health: <span className="text-slate-900 font-bold">{currentTelemetry.healthIndex}%</span></div>
-                <div className="text-[10px] text-slate-400 font-medium mt-0.5">Anomaly threshold met: {currentTelemetry.anomalyScore > 0.4 ? 'WARNING' : 'NOMINAL'}</div>
+                <div className="text-[10px] font-medium mt-1">
+                  Anomaly threshold:{' '}
+                  {isFault ? (
+                    <span className="text-red-600 font-bold">CRITICAL FAULT</span>
+                  ) : isWarning ? (
+                    <span className="text-amber-600 font-bold">WARNING</span>
+                  ) : (
+                    <span className="text-emerald-600 font-bold">NOMINAL</span>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -145,17 +156,39 @@ export const Reports: React.FC = () => {
             <strong className="text-slate-950"> {currentTelemetry.degradationStatus}%</strong>. 
             The remaining useful life is estimated at 
             <strong className="text-slate-950"> {currentTelemetry.rulCycles}</strong> cycles. 
-            {currentTelemetry.anomalyScore > 0.4 ? (
-              <span className="text-amber-700 block mt-2 font-bold flex items-center gap-1.5">
-                <ShieldAlert className="w-4 h-4 shrink-0" />
-                Warning: Thermal anomalies on Cylinder 3 accelerate the expected wear rate. visual inspection is advised.
-              </span>
-            ) : (
-              <span className="text-emerald-700 block mt-2 font-bold">
-                Status: All parameters normal. No structural anomalies detected.
-              </span>
-            )}
           </p>
+
+          {isFault ? (
+            <div className="text-red-700 bg-red-50 border border-red-200 p-3.5 rounded-lg text-xs font-semibold flex items-start gap-2.5">
+              <ShieldAlert className="w-5 h-5 shrink-0 text-red-600 mt-0.5" />
+              <div>
+                <span className="font-bold text-red-800">Status: CRITICAL FAULT DETECTED</span>
+                <p className="text-[11px] text-red-700 mt-0.5">
+                  Severe parameter deviation observed ({currentTelemetry.rpm > 2750 ? `Overspeed alert at ${currentTelemetry.rpm} RPM` : currentTelemetry.faultPrediction || 'Thermal/Stress Limit Breached'}). Engine Health dropped to {currentTelemetry.healthIndex}%. Immediate propulsion inspection and borescope check mandatory.
+                </p>
+              </div>
+            </div>
+          ) : isWarning ? (
+            <div className="text-amber-800 bg-amber-50 border border-amber-200 p-3.5 rounded-lg text-xs font-semibold flex items-start gap-2.5">
+              <ShieldAlert className="w-5 h-5 shrink-0 text-amber-600 mt-0.5" />
+              <div>
+                <span className="font-bold text-amber-900">Status: DEGRADATION WARNING</span>
+                <p className="text-[11px] text-amber-700 mt-0.5">
+                  Thermal or mechanical stress detected accelerating wear rate. Visual cylinder inspection and sensor calibration advised before next sortie.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-emerald-800 bg-emerald-50 border border-emerald-200 p-3.5 rounded-lg text-xs font-semibold flex items-start gap-2.5">
+              <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-600 mt-0.5" />
+              <div>
+                <span className="font-bold text-emerald-900">Status: All parameters nominal.</span>
+                <p className="text-[11px] text-emerald-700 mt-0.5">
+                  No structural anomalies or safety threshold breaches detected across active ECU channels.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Print Disclaimer */}
