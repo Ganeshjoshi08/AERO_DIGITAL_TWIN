@@ -1,0 +1,49 @@
+PROPRIETARY SOFTWARE LICENSE & COPYRIGHT NOTICE
+
+Project: AeroTwin - AI-Enabled Real-Time Digital Twin for Aero-Piston Engines
+DRDO Problem Statement: PS 26054 (Robotics & Drones Domain)
+
+Copyright (c) 2026 Ganesh Joshi. All Rights Reserved.
+
+================================================================================
+TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+================================================================================
+
+1. OWNERSHIP AND PROPRIETARY RIGHTS:
+   The entire software codebase, including but not limited to source code, 
+   thermodynamic physics models, machine learning models (Random Forest, 
+   Isolation Forest, SHAP explainability pipelines), algorithmic logic, 
+   architectural designs, user interface components, mission replay datasets, 
+   and documentation contained within this repository, is the sole intellectual 
+   property of the Author, Ganesh Joshi.
+
+2. RESTRICTIONS ON USE:
+   No permission is granted to any individual, educational institution, corporate 
+   entity, or third party to:
+   a) Copy, duplicate, clone, fork, or mirror this software or any part thereof 
+      in any public, private, commercial, or academic forum.
+   b) Modify, translate, adapt, alter, or create derivative works based upon 
+      this codebase.
+   c) Distribute, sublicense, rent, lease, lend, sell, or commercially exploit 
+      the software or any of its algorithms.
+   d) Present, submit, defend, or claim authorship of this project, in whole or 
+      in part, for any academic examination, collegiate evaluation, degree 
+      requirement, hackathon, or competition without express written authorization 
+      from the Copyright Holder.
+   e) Reverse engineer, decompile, or disassemble any compiled modules or machine 
+      learning weights.
+
+3. ACADEMIC AND EVALUATION EXCLUSION:
+   Permission is granted exclusively to the authorized examiners, evaluation 
+   committee, and academic guides for the sole purpose of assessing and grading 
+   the Author's academic work under DRDO Problem Statement PS 26054.
+
+4. WARRANTY DISCLAIMER:
+   THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER "AS IS" WITHOUT ANY 
+   EXPRESS OR IMPLIED WARRANTIES, INCLUDING BUT NOT LIMITED TO THE IMPLIED 
+   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+================================================================================
+For licensing inquiries, permissions, or academic verification, contact:
+Ganesh Joshi | GitHub: @Ganeshjoshi08
+================================================================================

@@ -6,6 +6,7 @@
 [![Live Demo](https://img.shields.io/badge/Live_Dashboard-Vercel_Deployed-000000?style=for-the-badge&logo=vercel)](https://aero-digital-twin.vercel.app)
 [![ML Accuracy](https://img.shields.io/badge/ML_R²_Score-94.44%25-success?style=for-the-badge&logo=scikitlearn)](https://github.com/Ganeshjoshi08/AERO_DIGITAL_TWIN)
 [![Test Suite](https://img.shields.io/badge/Pytest-100%25_Passing-brightgreen?style=for-the-badge&logo=pytest)](https://github.com/Ganeshjoshi08/AERO_DIGITAL_TWIN)
+[![License](https://img.shields.io/badge/License-Proprietary_(All_Rights_Reserved)-orange?style=for-the-badge&logo=lock)](LICENSE)
 
 > **A hybrid Physics + Explainable AI (XAI) Digital Twin platform for real-time aero-piston engine health monitoring, fault prediction, Remaining Useful Life (RUL) estimation, and mission reliability enhancement for Medium-Altitude Long-Endurance (MALE) UAVs.**
 
